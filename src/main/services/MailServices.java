@@ -1,3 +1,5 @@
+package services;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.properties.EncryptableProperties;
 
@@ -16,7 +18,7 @@ public class MailServices {
         String messageText = "test test test";
 
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-        encryptor.setPassword("jasypt");
+        encryptor.setPassword("mkjashdgf");
         Properties props = new EncryptableProperties(encryptor);
         try {
             props.load(new FileInputStream("conf.properties"));
@@ -46,7 +48,7 @@ public class MailServices {
 public void createPropFile(){
     try {
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-        encryptor.setPassword("jasypt");
+        encryptor.setPassword("mkjashdgf");
         String encryptedText = encryptor.encrypt("");
         Properties props = new Properties();
         props.setProperty("mail.smtp.starttls.enable", "true");
