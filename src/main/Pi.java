@@ -1,17 +1,22 @@
 import services.MailServices;
-
+import gui.Gui;
 import java.util.Scanner;
+
 
 public class Pi {
     public static void main(String[] args) {
         char r = 'z';
         Scanner scanner = new Scanner(System.in);
         MailServices ms = new MailServices();
-        while (r != 'e') {
-            System.out.println("\ns - send e-mail\np - set new password\nc - check password\ne - exit");
+        while (r!='g') {
+            System.out.println("\ng - switch to GUI\ns - send e-mail\np - set new password\nc - check password\ne - exit");
             r = scanner.next().charAt(0);
-            if (r == 's' || r == 'p' || r == 'c' || r == 'e') {
+            if (r == 'g' || r == 's' || r == 'p' || r == 'c' || r == 'e') {
                 switch (r) {
+                    case 'g': {
+                        new Gui().mainWindow();
+                        break;
+                    }
                     case 's': {
                         ms.mailSend();
                         break;
