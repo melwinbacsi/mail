@@ -12,11 +12,11 @@ public class Gui extends JFrame {
 
     public Gui() {
         new JFrame();
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     }
 
     public void mainWindow() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setName("main");
         setSize(300, 300);
         JPanel gui = new JPanel(new GridLayout(0, 1, 15, 10));
@@ -61,12 +61,23 @@ public class Gui extends JFrame {
     }
 
     public void passWindow() {
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setName("pass");
-        setSize(300, 100);
+        setSize(300, 200);
         JPanel gui = new JPanel(new GridLayout(0, 1, 15, 10));
         gui.setBorder(new EmptyBorder(20, 30, 20, 30));
+        JLabel l = new JLabel("New password:");
         JTextField t = new JTextField();
+        JButton o = new JButton("OK");
+        o.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        gui.add(l);
         gui.add(t);
+        gui.add(o);
         add(gui);
         setVisible(true);
     }
