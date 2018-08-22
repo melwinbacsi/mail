@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="mail">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/jasypt-1.9.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/javax.mail-1.4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jasypt-1.9.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/activation.jar!/" />
     </CLASSES>
     <JAVADOC />
