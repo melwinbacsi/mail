@@ -30,6 +30,7 @@ public class MailServices
       props.load(new java.io.FileInputStream("conf.properties"));
     } catch (IOException e) {
       e.printStackTrace();
+
     }
     Session mailSession = Session.getDefaultInstance(props);
     Message msg = new javax.mail.internet.MimeMessage(mailSession);

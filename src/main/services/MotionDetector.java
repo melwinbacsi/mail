@@ -1,89 +1,112 @@
 package services;
 
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.opencv_core.CvContour;
-import org.bytedeco.javacpp.opencv_core.CvMemStorage;
-import org.bytedeco.javacpp.opencv_core.CvSeq;
-import org.bytedeco.javacpp.opencv_core.IplImage;
-import org.bytedeco.javacpp.opencv_core.Mat;
-import org.bytedeco.javacv.OpenCVFrameConverter.ToIplImage;
-import org.bytedeco.javacv.OpenCVFrameConverter.ToMat;
-import org.bytedeco.javacv.OpenCVFrameGrabber;
+import org.bytedeco.javacv.*;
+import static org.bytedeco.javacpp.opencv_core.*;
+import static org.bytedeco.javacpp.opencv_imgproc.*;
+import static org.bytedeco.javacpp.opencv_imgcodecs.*;
+import static org.bytedeco.javacpp.opencv_imgproc.findContours;
 
-
-
-
-
-
-
-
-
-
+import java.io.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class MotionDetector
-  implements Runnable
+        implements Runnable
 {
-  public MotionDetector() {}
-  
-  public void run()
-  {
-    try
+    public MotionDetector() {}
+
+    public void run()
     {
-      motionDetect();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-  
-  public void motionDetect() throws Exception {
-    long time = 0L;
-    OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(-1);
-    OpenCVFrameConverter.ToIplImage converter = new OpenCVFrameConverter.ToIplImage();
-    grabber.start();
-    OpenCVFrameConverter.ToMat c2Mat = new OpenCVFrameConverter.ToMat();
-    opencv_core.IplImage frame = converter.convert(grabber.grab());
-    opencv_core.Mat mat = c2Mat.convertToMat(grabber.grab());
-    opencv_core.IplImage image = null;
-    opencv_core.IplImage prevImage = null;
-    opencv_core.IplImage diff = null;
-    opencv_core.CvMemStorage storage = opencv_core.CvMemStorage.create();
-    
-    while ((frame = converter.convert(grabber.grab())) != null) {
-      opencv_core.cvClearMemStorage(storage);
-      org.bytedeco.javacpp.opencv_imgproc.cvSmooth(frame, frame, 2, 9, 9, 2.0D, 2.0D);
-      if (image == null) {
-        image = opencv_core.IplImage.create(frame.width(), frame.height(), 8, 1);
-        org.bytedeco.javacpp.opencv_imgproc.cvCvtColor(frame, image, 7);
-      } else {
-        prevImage = image;
-        image = opencv_core.IplImage.create(frame.width(), frame.height(), 8, 1);
-        org.bytedeco.javacpp.opencv_imgproc.cvCvtColor(frame, image, 7);
-      }
-      if (diff == null) {
-        diff = opencv_core.IplImage.create(frame.width(), frame.height(), 8, 1);
-      }
-      if (prevImage != null) {
-        opencv_core.cvAbsDiff(image, prevImage, diff);
-        org.bytedeco.javacpp.opencv_imgproc.cvThreshold(diff, diff, 40.0D, 255.0D, 0);
-        opencv_core.CvSeq contour = new opencv_core.CvSeq(null);
-        org.bytedeco.javacpp.helper.opencv_imgproc.cvFindContours(diff, storage, contour, Loader.sizeof(opencv_core.CvContour.class), 1, 2);
-        while ((contour != null) && (!contour.isNull())) {
-          long now = System.currentTimeMillis() / 1000L;
-          if (now - time > 30L) {
-            grabber.stop();
-            opencv_core.cvClearMemStorage(storage);
-            Thread.sleep(3000L);
-            grabber.start();
-            mat = c2Mat.convertToMat(grabber.grab());
-            Still still = new Still(mat);
-            Thread t1 = new Thread(still);
-            t1.start();
-            time = now;
-          }
-          contour = contour.h_next();
+        try
+        {
+            motionDetect();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-      }
     }
-  }
+
+    public void motionDetect() throws Exception {
+        long time = 0L;
+        OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(-1);
+        grabber.start();
+        OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
+        Mat frame = converter.convert(grabber.grab());
+        Mat image = null;
+        Mat prevImage = null;
+        Mat diff = null;
+        MatVector contour = new MatVector();
+
+        // CanvasFrame canvasFrame = new CanvasFrame("Some Title");
+        // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
+
+        while ((frame = converter.convert(grabber.grab())) != null) {
+            contour.clear();
+            GaussianBlur(frame, frame, new Size(3, 3), 0);
+            if (image == null) {
+                image = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+                cvtColor(frame, image, CV_BGR2GRAY);
+            } else {
+                prevImage = image;
+                image = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+                cvtColor(frame, image, CV_BGR2GRAY);
+            }
+            if (diff == null) {
+                diff = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+            }
+            if (prevImage != null) {
+                absdiff(image, prevImage, diff);
+                threshold(diff, diff, 20, 255, CV_THRESH_BINARY);
+
+               // canvasFrame.showImage(converter.convert(diff));
+
+                findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+                for(int i=0; i < contour.size(); i++) {
+                    long now = System.currentTimeMillis() / 1000L;
+                    if (now - time > 30L) {
+                        grabber.stop();
+                        Thread.sleep(3000L);
+                        grabber.start();
+                        Still still = new Still(frame);
+                        Thread t1 = new Thread(still);
+                        t1.start();
+                        time = now;
+                    }
+                }
+            }
+        }
+    }
 }
+
+class Still implements Runnable {
+    Mat mat;
+    public Still(Mat mat){
+        this.mat = mat;
+    }
+
+
+    @Override
+    public void run(){
+
+        String path = dtf();
+        new MailServices().mailSend(path);
+        Thread.interrupted();
+    }
+
+    public String dtf() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HHmmss");
+        DateTimeFormatter day = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String t = LocalTime.now().format(dtf);
+        String d = LocalDate.now().format(day);
+        String path = ("/home/pi/camera/" + d + "/" + t + ".jpg");
+        File directory = new File(String.valueOf("/home/pi/camera/" + d));
+        if (!directory.exists()) {
+            directory.mkdir();
+        }
+        imwrite(path, mat);
+        return path;
+    }
+}
+
+
+

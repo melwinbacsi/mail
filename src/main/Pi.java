@@ -1,6 +1,8 @@
-import gui.Menu;
+import gui.*;
 
-public class Pi { public Pi() {}
-  
-  public static void main(String[] args) { new Menu().menu(); }
-}
+public class Pi {
+    public static void main(String[] args) {
+        new Menu().menu();
+
+        }
+    }
