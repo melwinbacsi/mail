@@ -1,6 +1,7 @@
 package gui;
 
 import services.MailServices;
+import services.MotionDetector;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -21,17 +22,11 @@ public class Gui extends JFrame {
         setSize(300, 300);
         JPanel gui = new JPanel(new GridLayout(0, 1, 15, 10));
         gui.setBorder(new EmptyBorder(20, 30, 20, 30));
-        JButton s = new JButton("SEND MAIL");
+        JButton m = new JButton("SET ALARM");
         JButton p = new JButton("SET PASS");
         JButton c = new JButton("CHECK PASS");
         JButton e = new JButton("EXIT");
         MailServices ms = new MailServices();
-        s.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ms.mailSend();
-            }
-        });
         p.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -51,7 +46,17 @@ public class Gui extends JFrame {
                 System.exit(0);
             }
         });
-        gui.add(s);
+        m.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    new MotionDetector().motionDetect();
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        gui.add(m);
         gui.add(p);
         gui.add(c);
         gui.add(e);

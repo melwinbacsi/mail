@@ -9,16 +9,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.mail.internet.MimeMessage;
 
 public class MailServices {
-    public void mailSend() {
-        String to = "cyberserker@gmail.com";
+    public void mailSend(String path) {
+        String to = "314malna@gmail.com";
         String from = "314malna@gmail.com";
         String subject = "event detected";
-        String messageText = "test test test";
+        String messageText = "Zaba van!";
 
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
         encryptor.setPassword("mkjashdgf");
@@ -34,7 +37,21 @@ public class MailServices {
             msg.setFrom(new InternetAddress(from));
             msg.setRecipient(Message.RecipientType.TO, (new InternetAddress(to)));
             msg.setSubject(subject);
-            msg.setText(messageText);
+            Multipart multipart = new MimeMultipart();
+
+            MimeBodyPart textBodyPart = new MimeBodyPart();
+            textBodyPart.setText(messageText);
+
+            MimeBodyPart attachmentBodyPart= new MimeBodyPart();
+            DataSource source = new FileDataSource(path);
+            attachmentBodyPart.setDataHandler(new DataHandler(source));
+            attachmentBodyPart.setFileName("alarm.jpg");
+
+            multipart.addBodyPart(textBodyPart);  // add the text part
+            multipart.addBodyPart(attachmentBodyPart); // add the attachement part
+
+            msg.setContent(multipart);
+
 
             Transport transport = mailSession.getTransport("smtp");
             try{transport.connect(props.getProperty("mail.smtp.host"), props.getProperty("username"), props.getProperty("password"));}
