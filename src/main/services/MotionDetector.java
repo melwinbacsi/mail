@@ -16,6 +16,12 @@ public class MotionDetector
 {
     public MotionDetector() {}
 
+    private static Mat pic = null;
+
+    public static Mat getPic() {
+        return pic;
+    }
+
     public void run()
     {
         try
@@ -41,8 +47,8 @@ public class MotionDetector
         // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
 
         while ((frame = converter.convert(grabber.grab())) != null) {
-            contour.clear();
             GaussianBlur(frame, frame, new Size(3, 3), 0);
+            pic = frame;
             if (image == null) {
                 image = new Mat(frame.rows(), frame.cols(),CV_8UC1);
                 cvtColor(frame, image, CV_BGR2GRAY);
@@ -56,44 +62,42 @@ public class MotionDetector
             }
             if (prevImage != null) {
                 absdiff(image, prevImage, diff);
-                threshold(diff, diff, 20, 255, CV_THRESH_BINARY);
+                threshold(diff, diff, 15, 255, CV_THRESH_BINARY);
 
                // canvasFrame.showImage(converter.convert(diff));
 
                 findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-                for(int i=0; i < contour.size(); i++) {
-                    long now = System.currentTimeMillis() / 1000L;
-                    if (now - time > 30L) {
-                        grabber.stop();
-                        Thread.sleep(3000L);
-                        grabber.start();
-                        Still still = new Still(frame);
+                if(contour.size()>0 && (System.currentTimeMillis() / 1000)-time > 30){
+                        Still still = new Still();
                         Thread t1 = new Thread(still);
                         t1.start();
-                        time = now;
+                        time = System.currentTimeMillis() / 1000;
                     }
                 }
             }
         }
     }
-}
 
 class Still implements Runnable {
     Mat mat;
-    public Still(Mat mat){
-        this.mat = mat;
+    public Still(){
     }
 
 
     @Override
     public void run(){
 
-        String path = dtf();
+        String path = null;
+        try {
+            path = dtf();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         new MailServices().mailSend(path);
         Thread.interrupted();
     }
 
-    public String dtf() {
+    public String dtf(){
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HHmmss");
         DateTimeFormatter day = DateTimeFormatter.ofPattern("yyyyMMdd");
         String t = LocalTime.now().format(dtf);
@@ -103,7 +107,12 @@ class Still implements Runnable {
         if (!directory.exists()) {
             directory.mkdir();
         }
-        imwrite(path, mat);
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        imwrite(path,new MotionDetector().getPic());
         return path;
     }
 }
