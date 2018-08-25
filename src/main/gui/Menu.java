@@ -8,27 +8,25 @@ public class Menu {
     public void menu() {
 
         char r = 'z';
+        boolean isRunning = false;
         Scanner scanner = new Scanner(System.in);
         MailServices ms = new MailServices();
-        Thread tm = null;
 
         while (r != 'g') {
-            System.out.println("\nm - set alarm\ng - switch to GUI\ns - stop alarm\np - set new password\nc - check password\ne - exit");
+            System.out.println("\nm - set alarm\ng - switch to GUI\np - set new password\nc - check password\ne - exit");
             r = scanner.next().charAt(0);
-            if (r == 'g' || r == 'p' || r == 'c' || r == 'e' || r == 'm' || r == 's') {
+            if (r == 'g' || r == 'p' || r == 'c' || r == 'e' || r == 'm') {
                 switch (r) {
                     case 'm': {
+                        if(!isRunning){
                         try {
+                            isRunning=true;
                             MotionDetector md = new MotionDetector();
-                            tm = new Thread(md);
+                            Thread tm = new Thread(md);
                             tm.start();
                         } catch (Exception e) {
                             e.printStackTrace();
-                        }
-                        break;
-                    }
-                    case 's': {
-                        tm.interrupt();
+                        }}
                         break;
                     }
                     case 'g': {

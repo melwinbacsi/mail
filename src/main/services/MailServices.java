@@ -1,15 +1,9 @@
 package services;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Properties;
-import javax.mail.AuthenticationFailedException;
-import javax.mail.Message;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.MimeBodyPart;
+import java.io.*;
+import java.util.*;
+import javax.mail.*;
+import javax.mail.internet.*;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 
 public class MailServices
