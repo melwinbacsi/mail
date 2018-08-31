@@ -62,7 +62,7 @@ public class MotionDetector
             }
             if (prevImage != null) {
                 absdiff(image, prevImage, diff);
-                threshold(diff, diff, 15, 255, CV_THRESH_BINARY);
+                threshold(diff, diff, 45, 255, CV_THRESH_BINARY);
 
                // canvasFrame.showImage(converter.convert(diff));
 
