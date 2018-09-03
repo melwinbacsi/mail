@@ -1,31 +1,35 @@
 package services;
 
 import org.bytedeco.javacv.*;
+
+import javax.imageio.ImageIO;
+
 import static org.bytedeco.javacpp.opencv_core.*;
 import static org.bytedeco.javacpp.opencv_imgproc.*;
 import static org.bytedeco.javacpp.opencv_imgcodecs.*;
 import static org.bytedeco.javacpp.opencv_imgproc.findContours;
 
+
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class MotionDetector
-        implements Runnable
-{
-    public MotionDetector() {}
+        implements Runnable {
+    public MotionDetector() {
+    }
 
-    private static Mat pic = null;
+    private static BufferedImage pic = null;
 
-    public static Mat getPic() {
+    public static BufferedImage getPic() {
         return pic;
     }
 
-    public void run()
-    {
-        try
-        {
+    public void run() {
+        try {
             motionDetect();
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,44 +52,44 @@ public class MotionDetector
 
         while ((frame = converter.convert(grabber.grab())) != null) {
             GaussianBlur(frame, frame, new Size(3, 3), 0);
-            pic = frame;
+            pic = new Java2DFrameConverter().(frame);
             if (image == null) {
-                image = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+                image = new Mat(frame.rows(), frame.cols(), CV_8UC1);
                 cvtColor(frame, image, CV_BGR2GRAY);
             } else {
                 prevImage = image;
-                image = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+                image = new Mat(frame.rows(), frame.cols(), CV_8UC1);
                 cvtColor(frame, image, CV_BGR2GRAY);
             }
             if (diff == null) {
-                diff = new Mat(frame.rows(), frame.cols(),CV_8UC1);
+                diff = new Mat(frame.rows(), frame.cols(), CV_8UC1);
             }
             if (prevImage != null) {
                 absdiff(image, prevImage, diff);
                 threshold(diff, diff, 45, 255, CV_THRESH_BINARY);
 
-               // canvasFrame.showImage(converter.convert(diff));
+                // canvasFrame.showImage(converter.convert(diff));
 
                 findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-                if(contour.size()>0 && (System.currentTimeMillis() / 1000)-time > 30){
-                        Still still = new Still();
-                        Thread t1 = new Thread(still);
-                        t1.start();
-                        time = System.currentTimeMillis() / 1000;
-                    }
+                if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 30) {
+                    Thread t1 = new Thread(new Still());
+                    t1.start();
+                    time = System.currentTimeMillis() / 1000;
                 }
             }
         }
     }
+}
 
 class Still implements Runnable {
     Mat mat;
-    public Still(){
+
+    public Still() {
     }
 
 
     @Override
-    public void run(){
+    public void run() {
 
         String path = null;
         try {
@@ -94,10 +98,9 @@ class Still implements Runnable {
             e.printStackTrace();
         }
         new MailServices().mailSend(path);
-        Thread.interrupted();
     }
 
-    public String dtf(){
+    public String dtf() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HHmmss");
         DateTimeFormatter day = DateTimeFormatter.ofPattern("yyyyMMdd");
         String t = LocalTime.now().format(dtf);
@@ -112,7 +115,12 @@ class Still implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        imwrite(path,new MotionDetector().getPic());
+        try {
+            ImageIO.write(MotionDetector.getPic(), "jpg", new File(path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return path;
     }
 }

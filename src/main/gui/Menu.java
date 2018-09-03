@@ -2,15 +2,23 @@ package gui;
 
 import services.MailServices;
 import services.MotionDetector;
+import services.ServerService;
 import java.util.Scanner;
 
 public class Menu {
-    public void menu() {
+    private static char r = 'z';
 
-        char r = 'z';
+    public static char getR() {
+        return r;
+    }
+
+    public void menu(){
+
         boolean isRunning = false;
         Scanner scanner = new Scanner(System.in);
         MailServices ms = new MailServices();
+        Thread ss = new Thread(new ServerService());
+        ss.start();
 
         while (r != 'g') {
             System.out.println("\nm - set alarm\ng - switch to GUI\np - set new password\nc - check password\ne - exit");
