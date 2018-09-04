@@ -52,7 +52,7 @@ public class MotionDetector
 
         while ((frame = converter.convert(grabber.grab())) != null) {
             GaussianBlur(frame, frame, new Size(3, 3), 0);
-            pic = new Java2DFrameConverter().(frame);
+            pic = new Java2DFrameConverter().getBufferedImage(grabber.grab());
             if (image == null) {
                 image = new Mat(frame.rows(), frame.cols(), CV_8UC1);
                 cvtColor(frame, image, CV_BGR2GRAY);
