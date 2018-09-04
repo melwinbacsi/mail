@@ -21,11 +21,19 @@ public class MotionDetector
         implements Runnable {
     public MotionDetector() {
     }
-
+    private static boolean mdStop = true;
     private static BufferedImage pic = null;
 
     public static BufferedImage getPic() {
         return pic;
+    }
+
+    public static boolean isMdStop() {
+        return mdStop;
+    }
+
+    public static void setMdStop(boolean mdStop) {
+        MotionDetector.mdStop = mdStop;
     }
 
     public void run() {
@@ -50,7 +58,7 @@ public class MotionDetector
         // CanvasFrame canvasFrame = new CanvasFrame("Some Title");
         // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
 
-        while ((frame = converter.convert(grabber.grab())) != null) {
+        while (!isMdStop()) {
             GaussianBlur(frame, frame, new Size(3, 3), 0);
             pic = new Java2DFrameConverter().getBufferedImage(grabber.grab());
             if (image == null) {
@@ -78,6 +86,8 @@ public class MotionDetector
                 }
             }
         }
+        grabber.stop();
+        Thread.interrupted();
     }
 }
 

@@ -15,12 +15,18 @@ public class ServerService implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        while (true) {
+        while (!MotionDetector.isMdStop()) {
             try {
                 new Thread(new ClientService(ss.accept())).start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        try {
+            ss.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Thread.interrupted();
     }
 }

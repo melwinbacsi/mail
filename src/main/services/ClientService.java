@@ -41,7 +41,7 @@ public class ClientService implements Runnable {
         pass = (String) ois.readObject();
         if (auth().equals(pass)) {
             System.out.println("remote client connected");
-            while (MotionDetector.getPic() != null) {
+            while (!MotionDetector.isMdStop()) {
                 im = new ImageIcon(MotionDetector.getPic());
                 try {
                     oos.writeUnshared(im);
