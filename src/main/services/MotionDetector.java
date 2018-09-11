@@ -21,10 +21,21 @@ public class MotionDetector
         implements Runnable {
     public MotionDetector() {
     }
+
     private static boolean mdStop = true;
     private static BufferedImage pic = null;
+    private static BufferedImage capturedPic = null;
 
-    public static BufferedImage getPic() {
+
+    static BufferedImage getCapturedPic() {
+        return capturedPic;
+    }
+
+    static void setCapturedPic(BufferedImage capturedPic) {
+        MotionDetector.capturedPic = capturedPic;
+    }
+
+    static BufferedImage getPic() {
         return pic;
     }
 
@@ -45,7 +56,7 @@ public class MotionDetector
     }
 
     public void motionDetect() throws Exception {
-        long time = 0L;
+        long time = 0;
         OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(-1);
         grabber.start();
         OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
@@ -54,6 +65,10 @@ public class MotionDetector
         Mat prevImage = null;
         Mat diff = null;
         MatVector contour = new MatVector();
+        int motionCounter = 0;
+        long lastMotion;
+        boolean first;
+        boolean captured = false;
 
         // CanvasFrame canvasFrame = new CanvasFrame("Some Title");
         // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
@@ -74,66 +89,35 @@ public class MotionDetector
             }
             if (prevImage != null) {
                 absdiff(image, prevImage, diff);
-                threshold(diff, diff, 45, 255, CV_THRESH_BINARY);
+                threshold(diff, diff, 50, 255, CV_THRESH_BINARY);
 
                 // canvasFrame.showImage(converter.convert(diff));
 
                 findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
                 if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 30) {
-                    Thread t1 = new Thread(new Still());
-                    t1.start();
-                    time = System.currentTimeMillis() / 1000;
+                    first = (System.currentTimeMillis() / 1000) - time > 50;
+                    ++motionCounter;
+                    lastMotion = System.currentTimeMillis() / 1000;
+                    if ((System.currentTimeMillis() / 1000) - lastMotion > 5) {
+                        motionCounter = 0;
+                    }
+                    if (motionCounter > 5) {
+                        time = System.currentTimeMillis() / 1000;
+                        if (!first) {
+                            capturedPic = pic;
+                            if (captured) {
+                                Thread t1 = new Thread(new Still(false));
+                                t1.start();
+                                motionCounter = 0;
+                            } else {
+                                captured = true;
+                            }
+                        }
+                    }
                 }
             }
         }
         grabber.stop();
-        Thread.interrupted();
     }
 }
-
-class Still implements Runnable {
-    Mat mat;
-
-    public Still() {
-    }
-
-
-    @Override
-    public void run() {
-
-        String path = null;
-        try {
-            path = dtf();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        new MailServices().mailSend(path);
-    }
-
-    public String dtf() {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HHmmss");
-        DateTimeFormatter day = DateTimeFormatter.ofPattern("yyyyMMdd");
-        String t = LocalTime.now().format(dtf);
-        String d = LocalDate.now().format(day);
-        String path = ("/home/pi/camera/" + d + "/" + t + ".jpg");
-        File directory = new File(String.valueOf("/home/pi/camera/" + d));
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        try {
-            ImageIO.write(MotionDetector.getPic(), "jpg", new File(path));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return path;
-    }
-}
-
-
 
