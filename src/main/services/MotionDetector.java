@@ -16,6 +16,7 @@ import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.TimerTask;
 
 public class MotionDetector
         implements Runnable {
@@ -69,6 +70,7 @@ public class MotionDetector
         long lastMotion;
         boolean first;
         boolean captured = false;
+        BufferedImage cachePic = null;
 
         // CanvasFrame canvasFrame = new CanvasFrame("Some Title");
         // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
@@ -88,14 +90,21 @@ public class MotionDetector
                 diff = new Mat(frame.rows(), frame.cols(), CV_8UC1);
             }
             if (prevImage != null) {
+                if ((System.currentTimeMillis() / 1000) - time > 50 && (System.currentTimeMillis() / 1000) - time < 100 && captured) {
+                    Thread t1 = new Thread(new Still(false, capturedPic));
+                    t1.start();
+                    motionCounter = 0;
+                    captured = false;
+                    cachePic = null;
+                }
                 absdiff(image, prevImage, diff);
                 threshold(diff, diff, 50, 255, CV_THRESH_BINARY);
 
                 // canvasFrame.showImage(converter.convert(diff));
 
                 findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-                if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 30) {
-                    first = (System.currentTimeMillis() / 1000) - time > 50;
+                if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 20) {
+                    first = (System.currentTimeMillis() / 1000) - time > 45;
                     ++motionCounter;
                     lastMotion = System.currentTimeMillis() / 1000;
                     if ((System.currentTimeMillis() / 1000) - lastMotion > 5) {
@@ -104,14 +113,12 @@ public class MotionDetector
                     if (motionCounter > 5) {
                         time = System.currentTimeMillis() / 1000;
                         if (!first) {
-                            capturedPic = pic;
-                            if (captured) {
-                                Thread t1 = new Thread(new Still(false));
-                                t1.start();
-                                motionCounter = 0;
-                            } else {
-                                captured = true;
+                            if (cachePic == null) {
+                                cachePic = pic;
                             }
+                            capturedPic = cachePic;
+                            cachePic = pic;
+                            captured = true;
                         }
                     }
                 }

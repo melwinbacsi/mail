@@ -5,8 +5,7 @@ import services.MotionDetector;
 import services.ServerService;
 import services.Still;
 
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 public class Menu {
     private static char r = 'z';
@@ -18,7 +17,6 @@ public class Menu {
         Thread tm;
         Thread ss = new Thread(new ServerService());
         ss.start();
-
         while (r != 'g') {
             System.out.println("\na - start alarm\ns - stop alarm\ng - switch to GUI\np - set new password\nc - check password\ne - exit");
             r = scanner.next().charAt(0);

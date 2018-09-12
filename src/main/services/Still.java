@@ -1,8 +1,8 @@
 package services;
 
-import org.bytedeco.javacpp.opencv_core;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -10,12 +10,17 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class Still implements Runnable {
-    opencv_core.Mat mat;
     private boolean instant;
+    private BufferedImage pic;
+
     public Still(boolean instant) {
-        this.instant=instant;
+        this.instant = instant;
     }
 
+    public Still(boolean instant, BufferedImage pic) {
+        this.instant = instant;
+        this.pic = pic;
+    }
 
     @Override
     public void run() {
@@ -37,11 +42,13 @@ public class Still implements Runnable {
         String path = ("/home/pi/camera/" + d + "/" + t + ".jpg");
         File directory = new File(String.valueOf("/home/pi/camera/" + d));
         if (!directory.exists()) {
-            directory.mkdirs()
+            directory.mkdirs();
         }
-        if(instant){MotionDetector.setCapturedPic(MotionDetector.getPic());}
+        if (instant) {
+            MotionDetector.setCapturedPic(MotionDetector.getPic());
+        }
         try {
-            ImageIO.write(MotionDetector.getCapturedPic(), "jpg", new File(path));
+            ImageIO.write(pic, "jpg", new File(path));
         } catch (IOException e) {
             e.printStackTrace();
         }
