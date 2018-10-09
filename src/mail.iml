@@ -7,6 +7,35 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="activation" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../activation.jar!/" />
+          <root url="jar://$MODULE_DIR$/../jasypt-1.9.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/../javacpp.jar!/" />
+          <root url="jar://$MODULE_DIR$/../javacv.jar!/" />
+          <root url="jar://$MODULE_DIR$/../javax.mail-1.4.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../opencv-linux-armhf.jar!/" />
+          <root url="jar://$MODULE_DIR$/../opencv.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-core-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-core.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-device.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-example.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-gpio-extension.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MODULE_DIR$/../pi4j-core-javadoc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-device-javadoc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-example-javadoc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-gpio-extension-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../pi4j-core-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-device-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-example-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../pi4j-gpio-extension-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

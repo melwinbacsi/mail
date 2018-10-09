@@ -1,129 +1,154 @@
 package services;
 
 import java.io.*;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import javax.mail.*;
 import javax.mail.internet.*;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.jasypt.properties.EncryptableProperties;
 
-public class MailServices
-{
-  public MailServices() {}
-  
-  public void mailSend(String path)
-  {
-    String to = "314malna@gmail.com";
-    String from = "314malna@gmail.com";
-    String subject = "event detected";
-    String messageText = "Zaba van!";
-    
-    StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-    encryptor.setPassword("mkjashdgf");
-    Properties props = new org.jasypt.properties.EncryptableProperties(encryptor);
-    try {
-      props.load(new java.io.FileInputStream("conf.properties"));
-    } catch (IOException e) {
-      e.printStackTrace();
+import static java.nio.file.Files.setPosixFilePermissions;
+
+public class MailServices {
+    public MailServices() {
+    }
+
+    public void mailSend(String path) {
+        String to = "314malna@gmail.com";
+        String from = "314malna@gmail.com";
+        String subject = "event detected";
+        int lw = 0;
+        int aw = 0;
+        int ow = 0;
+
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setPassword("mkjashdgf");
+        Properties props = new EncryptableProperties(encryptor);
+        try {
+            FileInputStream fis = new FileInputStream("conf.properties");
+            props.load(fis);
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        Session mailSession = Session.getDefaultInstance(props);
+        Message msg = new javax.mail.internet.MimeMessage(mailSession);
+        try {
+            msg.setFrom(new InternetAddress(from));
+            msg.setRecipient(javax.mail.Message.RecipientType.TO, new javax.mail.internet.InternetAddress(to));
+            msg.setSubject(subject);
+            Multipart multipart = new javax.mail.internet.MimeMultipart();
+
+            MimeBodyPart textBodyPart = new MimeBodyPart();
+            aw = LoadCell.getWeight();
+            lw = WeightStore.readActualWeight();
+            ow = WeightStore.readOrigoWeight();
+
+            textBodyPart.setText("Legutóbb "+(lw-aw)+"g táp fogyott.\nAz előző etetés óta összesen "+(ow-aw)+ " g tápot ettek.");
+
+            MimeBodyPart attachmentBodyPart = new MimeBodyPart();
+            javax.activation.DataSource source = new javax.activation.FileDataSource(path);
+            attachmentBodyPart.setDataHandler(new javax.activation.DataHandler(source));
+            attachmentBodyPart.setFileName("alarm.jpg");
+
+            multipart.addBodyPart(textBodyPart);
+            multipart.addBodyPart(attachmentBodyPart);
+
+            msg.setContent(multipart);
+
+
+            Transport transport = mailSession.getTransport("smtp");
+            try {
+                transport.connect(props.getProperty("mail.smtp.host"), props.getProperty("username"), props.getProperty("password"));
+            } catch (AuthenticationFailedException e) {
+                System.out.println("Wrong password!");
+                return;
+            }
+            transport.sendMessage(msg, msg.getAllRecipients());
+            transport.close();
+            System.out.println("Message sent");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            WeightStore.setLastWeight(lw);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            WeightStore.setActualWeight(aw);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
-    Session mailSession = Session.getDefaultInstance(props);
-    Message msg = new javax.mail.internet.MimeMessage(mailSession);
-    try {
-      msg.setFrom(new javax.mail.internet.InternetAddress(from));
-      msg.setRecipient(javax.mail.Message.RecipientType.TO, new javax.mail.internet.InternetAddress(to));
-      msg.setSubject(subject);
-      Multipart multipart = new javax.mail.internet.MimeMultipart();
-      
-      MimeBodyPart textBodyPart = new MimeBodyPart();
-      textBodyPart.setText(messageText);
-      
-      MimeBodyPart attachmentBodyPart = new MimeBodyPart();
-      javax.activation.DataSource source = new javax.activation.FileDataSource(path);
-      attachmentBodyPart.setDataHandler(new javax.activation.DataHandler(source));
-      attachmentBodyPart.setFileName("alarm.jpg");
-      
-      multipart.addBodyPart(textBodyPart);
-      multipart.addBodyPart(attachmentBodyPart);
-      
-      msg.setContent(multipart);
-      
 
-      Transport transport = mailSession.getTransport("smtp");
-      try { transport.connect(props.getProperty("mail.smtp.host"), props.getProperty("username"), props.getProperty("password"));
-      } catch (AuthenticationFailedException e) {
-        System.out.println("Wrong password!");
-        return; }
-      transport.sendMessage(msg, msg.getAllRecipients());
-      transport.close();
-      System.out.println("Message sent");
+    public void createPropFile(char[] pass) {
+        try {
+            StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+            encryptor.setPassword("mkjashdgf");
+            String encryptedText = encryptor.encrypt(String.valueOf(pass));
+            Properties props = new Properties();
+            props.setProperty("mail.smtp.starttls.enable", "true");
+            props.setProperty("mail.smtp.host", "smtp.gmail.com");
+            props.setProperty("mail.smtp.port", "587");
+            props.setProperty("mail.smtp.auth", "true");
+            props.setProperty("mail.smtp.starttls.required", "true");
+            props.setProperty("username", "314malna");
+            props.setProperty("password", "ENC(" + encryptedText + ")");
+
+            File file = new File("conf.properties");
+            FileOutputStream fOs = new FileOutputStream(file);
+            props.store(fOs, "SMTP");
+            fOs.close();
+            Set<PosixFilePermission> set = new HashSet();
+            set.add(PosixFilePermission.OWNER_READ);
+            set.add(PosixFilePermission.OWNER_WRITE);
+            setPosixFilePermissions(java.nio.file.Paths.get("conf.properties", new String[0]), set);
+        } catch (java.io.FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-    catch (Exception e)
-    {
-      e.printStackTrace();
+
+    public char[] passReader() {
+        java.io.Console con = System.console();
+        if (con == null) {
+            System.out.println("no console");
+            System.exit(0);
+        }
+        System.out.println("Enter password: ");
+        char[] pass = con.readPassword();
+        return pass;
     }
-  }
-  
-  public void createPropFile(char[] pass)
-  {
-    try {
-      StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-      encryptor.setPassword("mkjashdgf");
-      String encryptedText = encryptor.encrypt(String.valueOf(pass));
-      Properties props = new Properties();
-      props.setProperty("mail.smtp.starttls.enable", "true");
-      props.setProperty("mail.smtp.host", "smtp.gmail.com");
-      props.setProperty("mail.smtp.port", "587");
-      props.setProperty("mail.smtp.auth", "true");
-      props.setProperty("mail.smtp.starttls.required", "true");
-      props.setProperty("username", "314malna");
-      props.setProperty("password", "ENC(" + encryptedText + ")");
-      
-      java.io.File file = new java.io.File("conf.properties");
-      FileOutputStream fOs = new FileOutputStream(file);
-      props.store(fOs, "SMTP");
-      fOs.close();
-      java.util.Set<java.nio.file.attribute.PosixFilePermission> set = new java.util.HashSet();
-      set.add(java.nio.file.attribute.PosixFilePermission.OWNER_READ);
-      set.add(java.nio.file.attribute.PosixFilePermission.OWNER_WRITE);
-      java.nio.file.Files.setPosixFilePermissions(java.nio.file.Paths.get("conf.properties", new String[0]), set);
-    } catch (java.io.FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
+
+    public String passChecker() {
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setPassword("mkjashdgf");
+        Properties props = new org.jasypt.properties.EncryptableProperties(encryptor);
+        try {
+            FileInputStream fis = new FileInputStream("conf.properties");
+            props.load(fis);
+            fis.close();
+            Session mailSession = Session.getDefaultInstance(props);
+
+            Transport transport = null;
+            transport = mailSession.getTransport("smtp");
+            try {
+                transport.connect(props.getProperty("mail.smtp.host"), props.getProperty("username"), props.getProperty("password"));
+            } catch (AuthenticationFailedException e) {
+                return "Wrong password!";
+            }
+            transport.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "Password OK!";
     }
-  }
-  
-  public char[] passReader() {
-    java.io.Console con = System.console();
-    if (con == null) {
-      System.out.println("no console");
-      System.exit(0);
-    }
-    System.out.println("Enter password: ");
-    char[] pass = con.readPassword();
-    return pass;
-  }
-  
-  public String passChecker() {
-    StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-    encryptor.setPassword("mkjashdgf");
-    Properties props = new org.jasypt.properties.EncryptableProperties(encryptor);
-    try {
-      props.load(new java.io.FileInputStream("conf.properties"));
-      Session mailSession = Session.getDefaultInstance(props);
-      
-      Transport transport = null;
-      transport = mailSession.getTransport("smtp");
-      try {
-        transport.connect(props.getProperty("mail.smtp.host"), props.getProperty("username"), props.getProperty("password"));
-      } catch (AuthenticationFailedException e) {
-        return "Wrong password!";
-      }
-      transport.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    
-    return "Password OK!";
-  }
 }

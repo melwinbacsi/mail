@@ -24,7 +24,6 @@ public class Still implements Runnable {
 
     @Override
     public void run() {
-
         String path = null;
         try {
             path = dtf();
@@ -45,7 +44,7 @@ public class Still implements Runnable {
             directory.mkdirs();
         }
         if (instant) {
-            MotionDetector.setCapturedPic(MotionDetector.getPic());
+            pic = MotionDetector.getPic();
         }
         try {
             ImageIO.write(pic, "jpg", new File(path));

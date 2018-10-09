@@ -20,11 +20,9 @@ import java.util.TimerTask;
 
 public class MotionDetector
         implements Runnable {
-    public MotionDetector() {
-    }
 
     private static boolean mdStop = true;
-    private static BufferedImage pic = null;
+    private static BufferedImage pic;
     private static BufferedImage capturedPic = null;
 
 
@@ -38,6 +36,10 @@ public class MotionDetector
 
     static BufferedImage getPic() {
         return pic;
+    }
+
+    public static void setPic(BufferedImage pic) {
+        MotionDetector.pic = pic;
     }
 
     public static boolean isMdStop() {
@@ -58,6 +60,7 @@ public class MotionDetector
 
     public void motionDetect() throws Exception {
         long time = 0;
+
         OpenCVFrameGrabber grabber = new OpenCVFrameGrabber(-1);
         grabber.start();
         OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
@@ -66,9 +69,7 @@ public class MotionDetector
         Mat prevImage = null;
         Mat diff = null;
         MatVector contour = new MatVector();
-        int motionCounter = 0;
-        long lastMotion;
-        boolean first;
+        int detectionCounter = 0;
         boolean captured = false;
         BufferedImage cachePic = null;
 
@@ -76,8 +77,8 @@ public class MotionDetector
         // canvasFrame.setCanvasSize(frame.rows(), frame.cols());
 
         while (!isMdStop()) {
+            setPic(new Java2DFrameConverter().getBufferedImage(grabber.grab()));
             GaussianBlur(frame, frame, new Size(3, 3), 0);
-            pic = new Java2DFrameConverter().getBufferedImage(grabber.grab());
             if (image == null) {
                 image = new Mat(frame.rows(), frame.cols(), CV_8UC1);
                 cvtColor(frame, image, CV_BGR2GRAY);
@@ -90,36 +91,34 @@ public class MotionDetector
                 diff = new Mat(frame.rows(), frame.cols(), CV_8UC1);
             }
             if (prevImage != null) {
-                if ((System.currentTimeMillis() / 1000) - time > 50 && (System.currentTimeMillis() / 1000) - time < 100 && captured) {
-                    Thread t1 = new Thread(new Still(false, capturedPic));
+                if ((System.currentTimeMillis() / 1000) - time > 60 && System.currentTimeMillis() / 1000 - time < 100 && captured) {
+                    Thread t1 = new Thread(new Still(false, getCapturedPic()));
                     t1.start();
-                    motionCounter = 0;
                     captured = false;
                     cachePic = null;
+                    PirSensor.setPirDetected(false);
                 }
+
                 absdiff(image, prevImage, diff);
-                threshold(diff, diff, 50, 255, CV_THRESH_BINARY);
+                threshold(diff, diff, 45, 255, CV_THRESH_BINARY);
 
                 // canvasFrame.showImage(converter.convert(diff));
 
                 findContours(diff, contour, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-                if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 20) {
-                    first = (System.currentTimeMillis() / 1000) - time > 45;
-                    ++motionCounter;
-                    lastMotion = System.currentTimeMillis() / 1000;
-                    if ((System.currentTimeMillis() / 1000) - lastMotion > 5) {
-                        motionCounter = 0;
+                if (contour.size() > 0 && (System.currentTimeMillis() / 1000) - time > 7) {
+                    if ((System.currentTimeMillis() / 1000) - time < 15 && PirSensor.isPirDetected()) {
+                        detectionCounter++;
+                    } else {
+                        detectionCounter = 0;
                     }
-                    if (motionCounter > 5) {
-                        time = System.currentTimeMillis() / 1000;
-                        if (!first) {
-                            if (cachePic == null) {
-                                cachePic = pic;
-                            }
-                            capturedPic = cachePic;
-                            cachePic = pic;
-                            captured = true;
+                    time = System.currentTimeMillis() / 1000;
+                    if (detectionCounter >= 3) {
+                        if (cachePic == null) {
+                            cachePic = getPic();
                         }
+                        setCapturedPic(cachePic);
+                        cachePic = getPic();
+                        captured = true;
                     }
                 }
             }
