@@ -21,7 +21,7 @@ import java.util.TimerTask;
 public class MotionDetector
         implements Runnable {
 
-    private static boolean mdStop = true;
+    private static boolean mdStop = false;
     private static BufferedImage pic;
     private static BufferedImage capturedPic = null;
 

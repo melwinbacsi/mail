@@ -28,40 +28,6 @@ public class ClientService implements Runnable {
         }
     }
 
-    /*   private void serverSocket() throws IOException, ClassNotFoundException {
-           ImageIcon im;
-           ObjectOutputStream oos = null;
-           ObjectInputStream ois = null;
-           String pass = null;
-           try {
-               oos = new ObjectOutputStream(s.getOutputStream());
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-           ois = new ObjectInputStream(s.getInputStream());
-           pass = (String) ois.readObject();
-           if (auth().equals(pass)) {
-               System.out.println("remote client connected");
-               while (!MotionDetector.isMdStop()) {
-                   im = new ImageIcon(MotionDetector.getPic());
-                   try {
-                       oos.writeUnshared(im);
-                       oos.reset();
-                   } catch (SocketException se) {
-                       System.out.println("remote client disconnected");
-                       break;
-                   }
-               }
-               s.close();
-           } else {
-               System.out.println("wrong password");
-               System.out.println(pass);
-               oos.close();
-               ois.close();
-               s.close();
-           }
-       }
-   */
     private void serverSocket() throws IOException, ClassNotFoundException {
         DataOutputStream dos = null;
         DataInputStream dis = null;
@@ -70,6 +36,8 @@ public class ClientService implements Runnable {
         dis = new DataInputStream(s.getInputStream());
         String req = dis.readUTF();
         String menuOrder = null;
+        int aw = 0;
+        int sw = 0;
         if (req.equals("login")) {
             pass = dis.readUTF();
             if (auth().equals(pass)) {
@@ -78,6 +46,7 @@ public class ClientService implements Runnable {
             } else {
                 dos.write(0);
             }
+
             if (MotionDetector.isMdStop()) {
                 dos.write(0);
             } else {
@@ -90,41 +59,60 @@ public class ClientService implements Runnable {
         if (req.equals("menu")) {
             menuOrder = dis.readUTF();
             if (menuOrder.equals("start")) {
-                if (MotionDetector.isMdStop()) {
+                if (PirSensor.isPirStop()) {
                     try {
-                        MotionDetector.setMdStop(false);
-                        Thread tm = new Thread(new MotionDetector());
-                        tm.start();
+                        PirSensor.setPirStop(false);
+                        Thread ps = new Thread(new PirSensor());
+                        ps.start();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    System.out.println("Server started");
-                }
-                if (MotionDetector.isMdStop()) {
-                    dos.write(0);
-                } else {
-                    dos.write(1);
                 }
             }
             if (menuOrder.equals("stop")) {
-                if (!MotionDetector.isMdStop()) {
-                    MotionDetector.setMdStop(true);
-                    System.out.println("Server stopped");
-                }
-                if (MotionDetector.isMdStop()) {
-                    dos.write(0);
-                } else {
-                    dos.write(1);
-                }
+                PirSensor.setPirStop(true);
+                MotionDetector.setMdStop(true);
             }
-            if (menuOrder.equals("screen")){
+            if (menuOrder.equals("set weight")) {
+                aw = LoadCell.getWeight();
+                try {
+                    WeightStore.setOrigoWeight(aw);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    WeightStore.setActualWeight(aw);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            if (menuOrder.equals("screen")) {
                 ImageIO.write(MotionDetector.getPic(), "jpg", new File("/home/pi/apache-tomcat-8.5.34/webapps/WebClient/screen.jpg"));
             }
+            if (menuOrder.equals("actual weight")) {
+            }
+            try {
+                sw = WeightStore.readOrigoWeight();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            aw = LoadCell.getWeight();
+
+
+            if (MotionDetector.isMdStop()) {
+                dos.write(0);
+            } else {
+                dos.write(1);
+            }
+            dos.writeInt(sw);
+            dos.writeInt(aw);
             dos.close();
             dis.close();
             s.close();
         }
     }
+
 
     private String auth() {
         StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();

@@ -5,7 +5,7 @@ import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 public class PirSensor implements Runnable {
-    private static boolean pirStop = true;
+    private static boolean pirStop = false;
     private static boolean pirDetected = false;
 
     public static boolean isPirDetected() {
