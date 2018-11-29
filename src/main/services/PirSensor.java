@@ -42,16 +42,15 @@ public class PirSensor implements Runnable {
                     PirSensor.setPirDetected(false);
                 }
 
-                try {
-                    while (!isPirStop()) {
-                        Thread.sleep(500);
-                    }
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
             }
         });
-    }
 
-    ;
+        try {
+            while (!isPirStop()) {
+                Thread.sleep(500);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

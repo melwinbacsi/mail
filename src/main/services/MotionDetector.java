@@ -92,8 +92,7 @@ public class MotionDetector
             }
             if (prevImage != null) {
                 if ((System.currentTimeMillis() / 1000) - time > 60 && System.currentTimeMillis() / 1000 - time < 100 && captured) {
-                    Thread t1 = new Thread(new Still(false, getCapturedPic()));
-                    t1.start();
+                    Still s = new Still(getCapturedPic());
                     captured = false;
                     cachePic = null;
                     PirSensor.setPirDetected(false);

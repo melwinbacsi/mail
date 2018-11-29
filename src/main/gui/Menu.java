@@ -37,8 +37,7 @@ public class Menu {
                         break;
                     }
                     case 't': {
-                        Thread st = new Thread(new Still(true));
-                        st.start();
+                        new Still();
                         break;
                     }
                     case 'w': {
@@ -74,7 +73,6 @@ public class Menu {
                             try {
                                 Thread.sleep(500);
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
                             }
                         }
                         if (!MotionDetector.isMdStop()) {
@@ -82,7 +80,6 @@ public class Menu {
                             try {
                                 Thread.sleep(500);
                             } catch (InterruptedException e) {
-                                e.printStackTrace();
                             }
                         }
                         System.exit(0);
