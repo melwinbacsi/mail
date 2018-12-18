@@ -1,22 +1,24 @@
 package gui;
 
+import db.DB;
+import db.Measurement;
 import services.*;
 
 import java.io.IOException;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Menu {
-    private static int origoWeight;
-
     public void menu() {
-
+        DB db = new DB();
         Scanner scanner = new Scanner(System.in);
         MailServices ms = new MailServices();
         Thread ps = new Thread(new PirSensor());
         ps.start();
         Thread ss = new Thread(new ServerService());
         ss.start();
-        Thread md = new Thread(new MotionDetector());
+        Thread md = new Thread(new MotionDetector(db));
         md.start();
         Thread lc = new Thread(new LoadCell());
         lc.start();
@@ -52,6 +54,11 @@ public class Menu {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+                        String time = LocalTime.now().format(dtf);
+                        int weight = LoadCell.getWeight();
+                        Measurement measurement = new Measurement(time, time, weight, weight);
+                        db.addMeasurement(measurement);
                         break;
                     }
                     case 'r': {
@@ -65,6 +72,7 @@ public class Menu {
                         System.out.println("A kezdő súly: " + sw + "g");
                         System.out.println("Az aktuális súly: " + aw + "g");
                         System.out.println("Teljes fogyás: " + (sw - aw) + "g");
+                        System.out.println("DB-ből: "+db.getOrigoWeight());
                         break;
                     }
                     case 'e': {

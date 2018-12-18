@@ -37,9 +37,9 @@ public class DB {
             e.printStackTrace();
         }
         try {
-            ResultSet rs = dbmd.getTables(null, "APP", "CONTACTS", null);
+            ResultSet rs = dbmd.getTables(null, "MAIL", "MEASUREMENTS", null);
             if (!rs.next()) {
-                createStatement.execute("create table measurements(id INT not null primary key generated always as identity (start with 1, increment by 1), meastime timestamp (20), filename varchar(20), currentweight int(4), origoweight int (4))");
+                createStatement.execute("create table measurements(id INT not null primary key generated always as identity (start with 1, increment by 1), meastime varchar (14), origotime varchar (14),actualweight int(4), origoweight int (4))");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -47,32 +47,43 @@ public class DB {
     }
 
 
-
-    public void addMeasurement(Person person) {
+    public void addMeasurement(Measurement measurement) {
         try {
-            String sql = "insert into contacts (lastname, firstname, email) values (?, ?, ?)";
+            String sql = "insert into measurements (meastime, origotime, actualweight, origoweight) values (?, ?, ?, ?)";
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, person.getLastName());
-            preparedStatement.setString(2, person.getFirstName());
-            preparedStatement.setString(3, person.getEmail());
+            preparedStatement.setString(1, measurement.getMeasTime());
+            preparedStatement.setString(2, measurement.getOrigoTime());
+            preparedStatement.setInt(2, measurement.getActualWeight());
+            preparedStatement.setInt(3, measurement.getOrigoWeight());
             preparedStatement.execute();
         } catch (SQLException e) {
-            System.out.println("Hiba a contact hozzáadással");
             e.printStackTrace();
         }
     }
 
-    public void addOrigoWeight(Person person) {
+    public int getOrigoWeight() {
+        int origoWeight = 0;
+        String sql = "select origoweight from measurements order by meastime desc limit 1";
         try {
-            String sql = "insert into contacts (lastname, firstname, email) values (?, ?, ?)";
-            PreparedStatement preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, person.getLastName());
-            preparedStatement.setString(2, person.getFirstName());
-            preparedStatement.setString(3, person.getEmail());
-            preparedStatement.execute();
+            ResultSet rs = createStatement.executeQuery(sql);
+            if(!rs.first()){
+            origoWeight = rs.getInt("origoweight");}
         } catch (SQLException e) {
-            System.out.println("Hiba a contact hozzáadással");
             e.printStackTrace();
         }
+        return origoWeight;
+    }
+
+    public String getOrigoTime() {
+        String origoTime = "";
+        String sql = "select origotime from measurements order by meastime desc limit 1";
+        try {
+            ResultSet rs = createStatement.executeQuery(sql);
+            if(!rs.first()){
+            origoTime = rs.getString("origotime");}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return origoTime;
     }
 }

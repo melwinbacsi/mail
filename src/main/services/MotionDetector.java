@@ -1,5 +1,7 @@
 package services;
 
+import db.DB;
+import db.Measurement;
 import org.bytedeco.javacv.*;
 
 import javax.imageio.ImageIO;
@@ -24,7 +26,7 @@ public class MotionDetector
     private static boolean mdStop = false;
     private static BufferedImage pic;
     private static BufferedImage capturedPic = null;
-
+    DB db;
 
     static BufferedImage getCapturedPic() {
         return capturedPic;
@@ -49,7 +51,9 @@ public class MotionDetector
     public static void setMdStop(boolean mdStop) {
         MotionDetector.mdStop = mdStop;
     }
-
+    public MotionDetector(DB db){
+        this.db=db;
+    }
     public void run() {
         try {
             motionDetect();
@@ -93,6 +97,9 @@ public class MotionDetector
             if (prevImage != null) {
                 if ((System.currentTimeMillis() / 1000) - time > 60 && System.currentTimeMillis() / 1000 - time < 100 && captured) {
                     Still s = new Still(getCapturedPic());
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+                    Measurement measurement = new Measurement(LocalTime.now().format(dtf), db.getOrigoTime(), LoadCell.getWeight(), db.getOrigoWeight());
+                    db.addMeasurement(measurement);
                     captured = false;
                     cachePic = null;
                     PirSensor.setPirDetected(false);
